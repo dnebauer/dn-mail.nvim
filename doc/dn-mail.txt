@@ -1,0 +1,175 @@
+*dn-mail-nvim.txt*  For Neovim version 0.9  Last change: 2024 January 15
+
+==============================================================================
+Table of Contents                                             *dn_mail.contents*
+
+Introduction ··················································· |dn_mail.intro|
+Address completion ································ |dn_mail.address_completion|
+Settings ···················································· |dn_mail.settings|
+Mappings ···················································· |dn_mail.mappings|
+Commands ···················································· |dn_mail.commands|
+
+==============================================================================
+Introduction                                                     *dn_mail.intro*
+
+An auxiliary mail plugin providing:
+• completion of email addresses in eml file address lines using
+  a neomutt alias file
+• re-flow text support
+• folding of quoted text
+• optional use of markdown syntax highlighting for the message body
+  (mapping and command provided)
+• sentence-based text objects (requires "vim-textobj-sentence" plugin)
+• sensible formatting preferences
+• optional re-wrapping of paragraphs (mapping provided).
+
+Address completion is covered in its own section below
+(|dn_mail.address_completion|) while other features are explained in the
+sections on settings (|dn_mail.settings|), mappings (|dn_mail.mappings|)
+and commands (|dn_mail.commands|).
+
+==============================================================================
+Address completion                                  *dn_mail.address_completion*
+
+This feature assumes a single file is used to store all emails harvested
+from the user's maildirs. The file stores one email address per line in
+standard neomutt alias definitions, for example:
+>
+    alias johnno John Citizen <john@isp.com> # personal email
+<
+The default location of the aliases file is "~/.config/neomutt/aliases" but
+this can be changed by the |dn_mail.dn_alias_file| global variable.
+
+If no aliases file is available, unreadable, or provides no email
+addresses in the expected format, address completion will abort with a
+warning message.
+
+The plugin hooks into vim's user defined completion in buffers with the
+|filetype| "mail" or "notmuch-compose". Address lines are those beginning
+with any of:
+• From:
+• To:
+• Cc:
+• Bcc:
+
+On these lines the user can press |ctrl-x_ctrl-u| to activate address
+completion.
+
+This feature is based on a plugin by Aaron D. Borden at
+https://github.com/adborden/vim-notmuch-address.
+
+==============================================================================
+Settings                                                      *dn_mail.settings*
+
+                                                            *dn_mail.alias_file*
+                                                *dn_mail.variable_dn_alias_file*
+Path to alias file ~
+
+The global variable "dn_alias_file" contains the absolute path to a file
+containing one email address per line in standard neomutt alias
+definitions.
+
+This plugin needs to access this file to provide address completion, so
+it needs to be specified with the global variable "dn_alias_file" if it
+is not located in the default location.
+
+If there is no alias file address completion will abort with a warning
+message.
+
+Default: $HOME/.config/neomutt/aliases
+
+                                                           *dn_mail.reflow_text*
+                                                      *dn_mail.option_textwidth*
+                                                  *dn_mail.option_formatoptions*
+                                                       *dn_mail.option_comments*
+Reflow text support ~
+
+Support reflowing of content with the following option settings:
+• 'textwidth' = 72
+• 'formatoptions' += "q"
+• 'comments' += "nb:>"
+
+These settings assume the user's mail agent supports reflowing of text,
+e.g., in neomutt the setting "text_flowed" is set to true.
+
+                                                           *dn_mail.fold_quoted*
+                                                       *dn_mail.option_foldexpr*
+                                                     *dn_mail.option_foldmethod*
+                                                      *dn_mail.option_foldlevel*
+                                                   *dn_mail.option_foldminlines*
+                                                    *dn_mail.option_colorcolumn*
+Folding of quoted text ~
+
+Support folding of quoted text with the following option settings:
+• 'foldexpr' = "strlen(substitute(matchstr(
+                getline(v:lnum),'\\v^\\s*%(\\>\\s*)+'),'\\s','','g'))"
+• 'foldmethod' = "expr"
+• 'foldlevel' = 1
+• 'foldminlines' = 2
+• 'colorcolumn' = "72"
+
+These settings were taken from the "mutt-trim" github repo README file
+(see https://github.com/Konfekt/mutt-trim).
+
+                                           *dn_mail.sentence_based_text_objects*
+Sentence-based text objects ~
+
+Sentence-based text objects are more sensible for composing emails.
+If the "preservim/vim-textobj-sentence" plugin is installed, that plugin's
+behaviour is activated by running the "textobj#sentence#init" function.
+See https://github.com/preservim/vim-textobj-sentence for more details.
+
+                                                *dn_mail.formatting_preferences*
+                                                     *dn_mail.option_formatexpr*
+Formatting preferences ~
+
+The 'formatexpr' option is set to "tqna1".
+
+                                                              *dn_mail.autolist*
+                                                          *dn_mail.mapping_<CR>*
+Autolist ~
+
+If the "gaoDean/autolist.nvim" plugin is installed, the |<Enter>| key is
+remapped to trigger that plugin's ":AutolistNewBullet" command. The
+effect of that command is that if the cursor is on a list entry, a new
+list entry is automatically created on the following line.
+See https://github.com/gaoDean/autolist.nvim for more details.
+Note that this mapping may be overridden by other plugins mapping the
+|<Enter>] key.
+
+==============================================================================
+Mappings                                                      *dn_mail.mappings*
+
+                                                 *dn_mail.markdown_highlighting*
+                                                    *dn_mail.mapping_<Leader>md*
+\md = markdown highlighting of message body ~
+
+Use this mapping in |Normal-mode| and |Insert-mode| to change syntax
+highlighting of the email message body to markdown. This is useful for
+mail programs configured to process the message body to convert markdown
+to html.
+
+Be aware that there is no corresponding mapping or command to reverse
+this change once applied.
+
+                                                      *dn_mail.rewrap_paragraph*
+                                                        *dn_mail.mapping_<Alt>q*
+<Alt-q> = rewrap paragraph ~
+
+Use "Alt-q" in |Normal-mode| and |Insert-mode| to rewrap the current
+paragraph as per |gq|.
+
+==============================================================================
+Commands                                                      *dn_mail.commands*
+
+                                                  *dn_mail.DNMarkdownFormatting*
+DNMarkdownFormatting = markdown highlighting of message body ~
+
+Change the syntax highlighting of the email message body to markdown.
+This is useful for mail programs configured to process the message body
+to convert markdown to html.
+
+Be aware that there is no corresponding mapping or command to reverse
+this change once applied.
+
+vim:tw=78:ts=8:noet:ft=help:norl:
