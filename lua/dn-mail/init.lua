@@ -476,7 +476,7 @@ function dn_mail.address_completion(findstart, base)
 			vim.api.nvim_echo({ { msg, "WarningMsg" } }, true, {})
 		end
 		-- • get location of aliases file
-		local aliases_file = vim.loop.os_homedir() .. "/.config/neomutt/aliases"
+		local aliases_file = vim.uv.os_homedir() .. "/.config/neomutt/aliases"
 		local ok, user_file = pcall(vim.api.nvim_get_var, "dn_alias_file")
 		if ok then
 			aliases_file = user_file
