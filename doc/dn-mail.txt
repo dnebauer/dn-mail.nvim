@@ -1,4 +1,4 @@
-*dn-mail-nvim.txt*  For Neovim version 0.9  Last change: 2024 January 15
+*dn-mail-nvim.txt*  For Neovim version 0.11  Last change: 2025 October 18
 
 ==============================================================================
 Table of Contents                                             *dn_mail.contents*
@@ -162,8 +162,8 @@ paragraph as per |gq|.
 ==============================================================================
 Commands                                                      *dn_mail.commands*
 
-                                                  *dn_mail.DNMarkdownFormatting*
-DNMarkdownFormatting = markdown highlighting of message body ~
+                                                  *dn_mail.MUMarkdownFormatting*
+MUMarkdownFormatting = markdown highlighting of message body ~
 
 Change the syntax highlighting of the email message body to markdown.
 This is useful for mail programs configured to process the message body

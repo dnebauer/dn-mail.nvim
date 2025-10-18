@@ -7,7 +7,7 @@ vim.g.dn_mail_loaded = true
 -- DOCUMENTATION  {{{1
 
 ---@brief [[
----*dn-mail-nvim.txt*  For Neovim version 0.9  Last change: 2024 January 26
+---*dn-mail-nvim.txt*  For Neovim version 0.11  Last change: 2025 October 18
 ---@brief ]]
 
 ---@toc dn_mail.contents
@@ -66,33 +66,32 @@ local dn_mail = {}
 
 -- PRIVATE VARIABLES  {{{1
 
+-- private plugin configuration options
+-- • none defined at this time
+local _config = {}
+
 local sf = string.format
 
 -- PRIVATE FUNCTIONS
-
--- forward declarations  {{{1
-local mail_md_mode
-local option
-local variable
 
 -- mail_md_mode(mode)  {{{1
 
 ---@private
 ---Format mail message body as markdown.
 ---@return nil _ No return value
-mail_md_mode = function()
+local function mail_md_mode()
 	-- only do this once
-	if variable("exists", "buffer", "mail_mode_done") then
+	if vim.fn.exists("b:mail_mode_done") then
 		return
 	end
-	variable("set", "buffer", "mail_mode_done", 1)
+	vim.b.mail_mode_done = true
 	-- define syntax group list '@synMailIncludeMarkdown'
 	-- • add 'contained' flag to all syntax items in 'syntax/markdown.vim'
 	-- • add top-level syntax items in 'syntax/markdown.vim' to
 	--   '@synMailIncludeMarkdown' syntax group list
-	variable("remove", "buffer", "current_syntax")
+	vim.b.current_syntax = nil
 	vim.api.nvim_exec2("syntax include @synMailIncludeMarkdown syntax/markdown.vim", {})
-	variable("set", "buffer", "current_syntax", "mail")
+	vim.b.current_syntax = "mail"
 	-- apply markdown region
 	--       keepend: a match with an end pattern truncates any contained
 	--                matches
@@ -124,166 +123,28 @@ mail_md_mode = function()
 	vim.api.nvim_echo({ { "Using markdown syntax for mail body" } }, true, {})
 end
 
--- option("get", name, {opts})
--- option(operation, name, value|opts, [opts])  {{{1
+-- config([opts])  {{{1
 
 ---@private
----Universal function for option manipulation. There are 2 function
----signatures: one for a get operation, and another for set, append, prepend,
----and remove operations.
+---Function required by several popular plugin managers.
+---It ignores any options passed to it.
 ---
----The "get" operation returns a table for list- and map-style options, as
----per |vim.opt|. The remaining operations accept table values as per
----|vim.opt|.
----@param operation string Operation to perform (get|set|append|prepend|remove)
----@param name string Name of option to operate upon
----@param arg3 table|string|number|boolean|nil Depends on operation:
----• "get": Optional configuration dict
----• other: Value to set, append, prepend, or remove
----@param arg4 table|string|number|boolean|nil Depends on operation:
----• "get": Not used
----• other: Optional configuration dict
----
----The optional configuration dict has only 1 valid key:
----• {scope} (string): Can be "local" (behaves as `:setlocal`),
----  "global" (behaves as `:setglobal`), or
----  nil (behaves as ":set", see |set-args|)
----@return any|nil _ Depends on operation:
----• "get": Value of option
----• other: nil
-option = function(operation, name, arg3, arg4)
-	-- functions
-	-- • check param is a non-empty string
-	local _check_string_param = function(_name)
-		assert(
-			type(_name) == "string" and string.len(_name) > 0,
-			"Expected non-empty string, got " .. type(_name) .. ": " .. tostring(_name)
-		)
-	end
-	-- • check option name
-	local _check_option_name = function(_name)
-		local ok = pcall(function()
-			local _ = vim.opt[_name]
-		end)
-		assert(ok, "Invalid option name: " .. name)
-	end
-	-- check params
-	-- • operation
-	assert(type(operation) == "string", "Expected string, got " .. type(string))
-	local valid_operations = { "get", "set", "append", "prepend", "remove" }
-	assert(vim.tbl_contains(valid_operations, operation), "Invalid operation: " .. operation)
-	-- • name
-	_check_string_param(name)
-	_check_option_name(name)
-	-- • arg3 ('value' or 'opts')
-	local opts, value = {}, nil
-	local value_types = { "table", "number", "integer", "string", "boolean", "nil" }
-	if operation == "get" then
-		-- arg3 is 'opts'
-		opts = opts or {}
-		local valid_arg3_types = { "table", "nil" }
-		assert(vim.tbl_contains(valid_arg3_types, type(arg3)), "Expected table, got " .. type(arg3))
-		if type(arg3) == "table" then
-			for key, val in ipairs(arg3) do
-				opts[key] = val
-			end
-		end
-	else
-		-- arg3 is 'value'
-		assert(vim.tbl_contains(value_types, type(arg3)), "Invalid option value type: " .. type(arg3))
-		value = arg3
-	end
-	-- • arg4 ('opts' or nil)
-	if vim.tbl_contains({ "set", "append", "prepend", "remove" }, operation) then
-		-- arg4 is 'opts'
-		opts = opts or {}
-		local valid_arg4_types = { "table", "nil" }
-		assert(vim.tbl_contains(valid_arg4_types, type(arg4)), "Expected table, got " .. type(arg4))
-		if type(arg4) == "table" then
-			for key, val in ipairs(arg4) do
-				opts[key] = val
-			end
-		end
-	end
-	-- • opts
-	for key, val in pairs(opts) do
-		if key == "scope" then
-			local valid_scopes = { "local", "global" }
-			assert(type(val) == "string", "Expected string scope, got " .. type(val))
-			assert(vim.tbl_contains(valid_scopes, val), "Invalid scope: " .. val)
-		else
-			error("Invalid configuration option: " .. key)
-		end
-	end
-	-- get option verb
-	local opt_verb = "opt"
-	if opts.scope then
-		opt_verb = opts.scope
-	end
-	-- perform operations
-	if operation == "get" then
-		return vim[opt_verb][name]:get()
-	elseif operation == "set" then
-		vim[opt_verb][name] = value
-	elseif operation == "append" then
-		vim[opt_verb][name]:append(value)
-	elseif operation == "prepend" then
-		vim[opt_verb][name]:prepend(value)
-	elseif operation == "remove" then
-		vim[opt_verb][name]:remove(value)
-	end
+---@param opts table|nil Configuration options. Ignored.
+---@return nil _ No return value
+function dn_mail.config(opts)
+	_config = vim.tbl_deep_extend("force", _config, opts or {})
 end
 
--- variable(operation, scope, name, [value]) {{{1
----Universal function for vaariable manipulation.
----@param operation string Operation to perform on variable (get, set, exists, remove)
----@param scope string Variable scope (only 'buffer' and 'global' supported)
----@param name string Variable name
----@param value any|nil Variable value (set only)
----@return any|nil _ Return value depends on operation:
----• 'get': any
----• other: nil
-variable = function(operation, scope, name, value)
-	-- functions
-	-- • check param is a non-empty string
-	local _check_string_param = function(_name)
-		assert(
-			type(_name) == "string" and string.len(_name) > 0,
-			"Expected non-empty string, got " .. type(_name) .. ": " .. tostring(_name)
-		)
-	end
-	-- check params
-	-- • operation
-	_check_string_param(operation)
-	local valid_operations = { "get", "set", "exists", "remove" }
-	assert(vim.tbl_contains(valid_operations, operation), "Invalid operation: " .. operation)
-	-- • scope
-	_check_string_param(scope)
-	local valid_scopes = { "buffer", "global" }
-	assert(vim.tbl_contains(valid_scopes, scope), "Invalid operation: " .. scope)
-	-- • name
-	_check_string_param(name)
-	-- • value
-	if operation ~= "set" and value ~= nil then
-		error("Non-nil value provided for variable" .. operation .. " operation")
-	end
-	-- perform operation
-	local scope_char = { buffer = "b", global = "g" }
-	if operation == "get" then
-		return vim[scope_char[scope]][name]
-	elseif operation == "set" then
-		vim[scope_char[scope]][name] = value
-	elseif operation == "exists" then
-		if scope == "buffer" then
-			local ok, _ = pcall(vim.api.nvim_buf_get_var, 0, name)
-			return ok
-		elseif scope == "global" then
-			local ok, _ = pcall(vim.api.nvim_get_var, name)
-			return ok
-		end
-	elseif operation == "remove" then
-		vim[scope_char[scope]][name] = nil
-	end
+-- setup([opts])  {{{1
+
+---@private
+---Function required by several popular plugin managers.
+---It ignores any options passed to it.
+---
+---@param opts table|nil Configuration options. Ignored.
+---@return nil _ No return value
+function dn_mail.setup(opts)
+	dn_mail.config(opts)
 end
 -- }}}1
 
@@ -329,9 +190,9 @@ end
 ---These settings assume the user's mail agent supports reflowing of text,
 ---e.g., in neomutt the setting "text_flowed" is set to true.
 ---@brief ]]
-option("set", "textwidth", 72, { scope = "local" })
-option("append", "formatoptions", "q", { scope = "local" })
-option("append", "comments", "nb:>", { scope = "local" })
+vim.bo.textwidth = 72
+vim.opt_local.formatoptions:append("q")
+vim.opt_local.comments:append("nb:>")
 
 -- fold quoted text  {{{1
 
@@ -355,16 +216,11 @@ option("append", "comments", "nb:>", { scope = "local" })
 ---These settings were taken from the "mutt-trim" github repo README file
 ---(see https://github.com/Konfekt/mutt-trim).
 ---@brief ]]
-option(
-	"set",
-	"foldexpr",
-	"strlen(substitute(matchstr(getline(v:lnum),'\\v^\\s*%(\\>\\s*)+'),'\\s','','g'))",
-	{ scope = "local" }
-)
-option("set", "foldmethod", "expr", { scope = "local" })
-option("set", "foldlevel", 1, { scope = "local" })
-option("set", "foldminlines", 2, { scope = "local" })
-option("set", "colorcolumn", "72", { scope = "local" })
+vim.wo.foldexpr = "strlen(substitute(matchstr(getline(v:lnum),'\\v^\\s*%(\\>\\s*)+'),'\\s','','g'))"
+vim.wo.foldmethod = "expr"
+vim.wo.foldlevel = 1
+vim.wo.foldminlines = 2
+vim.wo.colorcolumn = "72"
 
 -- sentence-based text objects  {{{1
 
@@ -390,7 +246,7 @@ end)
 ---
 ---The 'formatexpr' option is set to "tqna1".
 ---@brief ]]
-option("set", "formatexpr", "tqna1", { scope = "local" })
+vim.bo.formatexpr = "tqna1"
 
 -- autolist  {{{1
 
@@ -528,7 +384,7 @@ function dn_mail.address_completion(findstart, base)
 		return matches
 	end
 end
-option("set", "completefunc", "v:lua.require'dn-mail'.address_completion", { scope = "local" })
+vim.bo.completefunc = "v:lua.require'dn-mail'.address_completion"
 -- }}}1
 
 -- MAPPINGS
