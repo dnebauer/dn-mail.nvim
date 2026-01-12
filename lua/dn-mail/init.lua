@@ -82,6 +82,7 @@ local sf = string.format
 local function mail_md_mode()
 	-- only do this once
 	if vim.fn.exists("b:mail_mode_done") then
+		vim.api.nvim_echo({ { "Markdown format function executed previously" } }, true, {})
 		return
 	end
 	vim.b.mail_mode_done = true
@@ -407,6 +408,9 @@ vim.bo.completefunc = "v:lua.require'dn-mail'.address_completion"
 ---
 ---Be aware that there is no corresponding mapping or command to reverse
 ---this change once applied.
+---
+---The function called by this mapping can only be executed once. Subsequent
+---attmpts to execute it display a message before execution aborts.
 ---@brief ]]
 vim.keymap.set(
 	{ "n", "i" },
@@ -445,6 +449,9 @@ vim.keymap.set("i", "<M-q>", "<Esc>{gq}<CR>a", { remap = false, silent = true })
 ---
 ---Be aware that there is no corresponding mapping or command to reverse
 ---this change once applied.
+---
+---The function called by this command can only be executed once. Subsequent
+---attmpts to execute it display a message before execution aborts.
 ---@brief ]]
 vim.api.nvim_create_user_command("MUMailMarkdownFormatting", function()
 	mail_md_mode()

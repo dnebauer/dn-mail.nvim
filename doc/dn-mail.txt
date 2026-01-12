@@ -152,6 +152,9 @@ to html.
 Be aware that there is no corresponding mapping or command to reverse
 this change once applied.
 
+The function called by this mapping can only be executed once. Subsequent
+attmpts to execute it display a message before execution aborts.
+
                                                       *dn_mail.rewrap_paragraph*
                                                         *dn_mail.mapping_<Alt>q*
 <Alt-q> = rewrap paragraph ~
@@ -171,5 +174,8 @@ to convert markdown to html.
 
 Be aware that there is no corresponding mapping or command to reverse
 this change once applied.
+
+The function called by this command can only be executed once. Subsequent
+attmpts to execute it display a message before execution aborts.
 
 vim:tw=78:ts=8:noet:ft=help:norl:
