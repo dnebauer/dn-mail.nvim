@@ -81,7 +81,7 @@ local sf = string.format
 ---@return nil _ No return value
 local function mail_md_mode()
 	-- only do this once
-	if vim.fn.exists("b:mail_mode_done") then
+	if vim.fn.exists("b:mail_mode_done") ~= 0 then
 		vim.api.nvim_echo({ { "Markdown format function executed previously", "WarningMsg" } }, true, {})
 		return
 	end
