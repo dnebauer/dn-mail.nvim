@@ -263,7 +263,9 @@ vim.bo.formatexpr = "tqna1"
 ---Note that this mapping may be overridden by other plugins mapping the
 ---|<Enter>] key.
 ---@brief ]]
-vim.keymap.set("i", "<CR>", "<CR><Cmd>AutolistNewBullet<CR>")
+if vim.fn.exists(":AutolistNewBullet") ~= 0 then
+	vim.keymap.set("i", "<CR>", "<CR><Cmd>AutolistNewBullet<CR>")
+end
 -- }}}1
 
 -- PUBLIC FUNCTIONS
