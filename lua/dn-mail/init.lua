@@ -416,7 +416,7 @@ vim.keymap.set(
 	{ "n", "i" },
 	"<Leader>md",
 	mail_md_mode,
-	{ buffer = 0, silent = true, desc = "Use markdown syntax highlighting for message body" }
+	{ buf = 0, silent = true, desc = "Use markdown syntax highlighting for message body" }
 )
 
 -- <M-q> = rewrap paragraph  {{{1
