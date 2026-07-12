@@ -7,7 +7,7 @@ vim.g.dn_mail_loaded = true
 -- DOCUMENTATION  {{{1
 
 ---@brief [[
----*dn-mail-nvim.txt*  For Neovim version 0.11  Last change: 2025 October 18
+---*dn-mail-nvim.txt*  For Neovim version 0.11  Last change: 2026 July 13
 ---@brief ]]
 
 ---@toc dn_mail.contents
@@ -19,8 +19,7 @@ vim.g.dn_mail_loaded = true
 ---  a neomutt alias file
 ---• re-flow text support
 ---• folding of quoted text
----• optional use of markdown syntax highlighting for the message body
----  (mapping and command provided)
+---• use of markdown syntax highlighting for the message body
 ---• sentence-based text objects (requires "vim-textobj-sentence" plugin)
 ---• sensible formatting preferences
 ---• optional re-wrapping of paragraphs (mapping provided).
@@ -73,56 +72,6 @@ local _config = {}
 local sf = string.format
 
 -- PRIVATE FUNCTIONS
-
--- mail_md_mode(mode)  {{{1
-
----@private
----Format mail message body as markdown.
----@return nil _ No return value
-local function mail_md_mode()
-	-- only do this once
-	if vim.fn.exists("b:mail_mode_done") ~= 0 then
-		vim.api.nvim_echo({ { "Markdown format function executed previously", "WarningMsg" } }, true, {})
-		return
-	end
-	vim.b.mail_mode_done = true
-	-- define syntax group list '@synMailIncludeMarkdown'
-	-- • add 'contained' flag to all syntax items in 'syntax/markdown.vim'
-	-- • add top-level syntax items in 'syntax/markdown.vim' to
-	--   '@synMailIncludeMarkdown' syntax group list
-	vim.b.current_syntax = nil
-	vim.api.nvim_exec2("syntax include @synMailIncludeMarkdown syntax/markdown.vim", {})
-	vim.b.current_syntax = "mail"
-	-- apply markdown region
-	--       keepend: a match with an end pattern truncates any contained
-	--                matches
-	--         start: markdown region starts after first empty line
-	--                • '\n' is newline [see ':h /\n']
-	--                • '\_^$' is empty line [see ':h /\_^', ':h /$']
-	--                • '\@1<=' means:
-	--                  - must still match preceding ('\n') and following
-	--                    ('\_^$') atoms in sequence
-	--                  - the '1' means only search backwards 1 character for
-	--                    the previous match
-	--                  - although the following atom is required for a match,
-	--                    the match is actually deemed to end before it begins
-	--                    [see ':h /zero-width']
-	--           end: markdown region ends at end of file
-	--   containedin: markdown region can be included in any syntax group in
-	--                'mail'
-	--      contains: syntax group '@synMailIncludeMarkdown' is allowed to
-	--                begin inside region
-	--
-	-- warning: keep syntax command below enclosed in [[]] rather than "",
-	--          because using "" causes the command to fail and markdown syntax
-	--          is not applied
-	vim.api.nvim_exec2(
-		[[syntax region synMailIncludeMarkdown keepend start='\n\@1<=\_^$' end='\%$' containedin=ALL contains=@synMailIncludeMarkdown]],
-		{}
-	)
-	-- notify user
-	vim.api.nvim_echo({ { "Using markdown syntax for mail body" } }, true, {})
-end
 
 -- config([opts])  {{{1
 
@@ -267,6 +216,49 @@ vim.bo.formatexpr = "tqna1"
 if vim.fn.exists(":AutolistNewBullet") ~= 0 then
 	vim.keymap.set("i", "<CR>", "<CR><Cmd>AutolistNewBullet<CR>")
 end
+
+-- markdown syntax highlighting of message body  {{{1
+
+---@tag dn_mail.MarkdownFormatting
+---@brief [[
+---Markdown syntax highlighting of message body ~
+---
+---Changes the syntax highlighting of the email message body to markdown.
+---It is assumed the mail program is configured to process the message body
+---to convert markdown to html.
+---@brief ]]
+vim.b.current_syntax = nil
+vim.api.nvim_exec2("syntax include @synMailIncludeMarkdown syntax/markdown.vim", {})
+vim.b.current_syntax = "mail"
+-- apply markdown region
+--       keepend: a match with an end pattern truncates any contained
+--                matches
+--         start: markdown region starts after first empty line
+--                • '\n' is newline [see ':h /\n']
+--                • '\_^$' is empty line [see ':h /\_^', ':h /$']
+--                • '\@1<=' means:
+--                  - must still match preceding ('\n') and following
+--                    ('\_^$') atoms in sequence
+--                  - the '1' means only search backwards 1 character for
+--                    the previous match
+--                  - although the following atom is required for a match,
+--                    the match is actually deemed to end before it begins
+--                    [see ':h /zero-width']
+--           end: markdown region ends at end of file
+--   containedin: markdown region can be included in any syntax group in
+--                'mail'
+--      contains: syntax group '@synMailIncludeMarkdown' is allowed to
+--                begin inside region
+--
+-- warning: keep syntax command below enclosed in [[]] rather than "",
+--          because using "" causes the command to fail and markdown syntax
+--          is not applied
+vim.api.nvim_exec2(
+	[[syntax region synMailIncludeMarkdown keepend start='\n\@1<=\_^$' end='\%$' containedin=ALL contains=@synMailIncludeMarkdown]],
+	{}
+)
+-- notify user
+vim.api.nvim_echo({ { "Using markdown syntax for mail body" } }, true, {})
 -- }}}1
 
 -- PUBLIC FUNCTIONS
@@ -394,31 +386,6 @@ vim.bo.completefunc = "v:lua.require'dn-mail'.address_completion"
 
 ---@mod dn_mail.mappings Mappings
 
--- \md = markdown highlighting of message body  {{{1
-
----@tag dn_mail.markdown_highlighting
----@tag dn_mail.mapping_<Leader>md
----@brief [[
----\md = markdown highlighting of message body ~
----
----Use this mapping in |Normal-mode| and |Insert-mode| to change syntax
----highlighting of the email message body to markdown. This is useful for
----mail programs configured to process the message body to convert markdown
----to html.
----
----Be aware that there is no corresponding mapping or command to reverse
----this change once applied.
----
----The function called by this mapping can only be executed once. Subsequent
----attmpts to execute it display a warning message before execution aborts.
----@brief ]]
-vim.keymap.set(
-	{ "n", "i" },
-	"<Leader>md",
-	mail_md_mode,
-	{ buf = 0, silent = true, desc = "Use markdown syntax highlighting for message body" }
-)
-
 -- <M-q> = rewrap paragraph  {{{1
 
 ---@tag dn_mail.rewrap_paragraph
@@ -431,31 +398,6 @@ vim.keymap.set(
 ---@brief ]]
 vim.keymap.set("n", "<M-q>", '{gq}<Bar>:echo "Rewrapped paragraph"<CR>', { remap = false, silent = true })
 vim.keymap.set("i", "<M-q>", "<Esc>{gq}<CR>a", { remap = false, silent = true })
--- }}}1
-
--- COMMANDS
-
----@mod dn_mail.commands Commands
-
--- MUMarkdownFormatting = markdown highlighting of message body  {{{1
-
----@tag dn_mail.MUMarkdownFormatting
----@brief [[
----MUMarkdownFormatting = markdown highlighting of message body ~
----
----Change the syntax highlighting of the email message body to markdown.
----This is useful for mail programs configured to process the message body
----to convert markdown to html.
----
----Be aware that there is no corresponding mapping or command to reverse
----this change once applied.
----
----The function called by this command can only be executed once. Subsequent
----attmpts to execute it display a warning message before execution aborts.
----@brief ]]
-vim.api.nvim_create_user_command("MUMailMarkdownFormatting", function()
-	mail_md_mode()
-end, { desc = "Use markdown syntax highlighting for message body" })
 -- }}}1
 
 -- note on folding in this file  {{{1

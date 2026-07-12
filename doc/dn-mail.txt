@@ -1,4 +1,4 @@
-*dn-mail-nvim.txt*  For Neovim version 0.11  Last change: 2025 October 18
+*dn-mail-nvim.txt*  For Neovim version 0.11  Last change: 2026 July 13
 
 ==============================================================================
 Table of Contents                                             *dn_mail.contents*
@@ -7,7 +7,6 @@ Introduction ·································�
 Address completion ································ |dn_mail.address_completion|
 Settings ···················································· |dn_mail.settings|
 Mappings ···················································· |dn_mail.mappings|
-Commands ···················································· |dn_mail.commands|
 
 ==============================================================================
 Introduction                                                     *dn_mail.intro*
@@ -17,8 +16,7 @@ An auxiliary mail plugin providing:
   a neomutt alias file
 • re-flow text support
 • folding of quoted text
-• optional use of markdown syntax highlighting for the message body
-  (mapping and command provided)
+• use of markdown syntax highlighting for the message body
 • sentence-based text objects (requires "vim-textobj-sentence" plugin)
 • sensible formatting preferences
 • optional re-wrapping of paragraphs (mapping provided).
@@ -137,23 +135,15 @@ See https://github.com/gaoDean/autolist.nvim for more details.
 Note that this mapping may be overridden by other plugins mapping the
 |<Enter>] key.
 
+                                                    *dn_mail.MarkdownFormatting*
+Markdown syntax highlighting of message body ~
+
+Changes the syntax highlighting of the email message body to markdown.
+It is assumed the mail program is configured to process the message body
+to convert markdown to html.
+
 ==============================================================================
 Mappings                                                      *dn_mail.mappings*
-
-                                                 *dn_mail.markdown_highlighting*
-                                                    *dn_mail.mapping_<Leader>md*
-\md = markdown highlighting of message body ~
-
-Use this mapping in |Normal-mode| and |Insert-mode| to change syntax
-highlighting of the email message body to markdown. This is useful for
-mail programs configured to process the message body to convert markdown
-to html.
-
-Be aware that there is no corresponding mapping or command to reverse
-this change once applied.
-
-The function called by this mapping can only be executed once. Subsequent
-attmpts to execute it display a warning message before execution aborts.
 
                                                       *dn_mail.rewrap_paragraph*
                                                         *dn_mail.mapping_<Alt>q*
@@ -161,21 +151,5 @@ attmpts to execute it display a warning message before execution aborts.
 
 Use "Alt-q" in |Normal-mode| and |Insert-mode| to rewrap the current
 paragraph as per |gq|.
-
-==============================================================================
-Commands                                                      *dn_mail.commands*
-
-                                                  *dn_mail.MUMarkdownFormatting*
-MUMarkdownFormatting = markdown highlighting of message body ~
-
-Change the syntax highlighting of the email message body to markdown.
-This is useful for mail programs configured to process the message body
-to convert markdown to html.
-
-Be aware that there is no corresponding mapping or command to reverse
-this change once applied.
-
-The function called by this command can only be executed once. Subsequent
-attmpts to execute it display a warning message before execution aborts.
 
 vim:tw=78:ts=8:noet:ft=help:norl:
