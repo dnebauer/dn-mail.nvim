@@ -74,15 +74,20 @@ local sf = string.format
 
 -- PRIVATE FUNCTIONS
 
--- mail_md_mode(mode)  {{{1
+-- mail_md_mode(feedback)  {{{1
 
 ---@private
 ---Format mail message body as markdown.
+---@param feedback boolean|nil Whether user feedback is provided
+---(default=false)
 ---@return nil _ No return value
-local function mail_md_mode()
+local function mail_md_mode(feedback)
+	feedback = feedback or false
 	-- only do this once
 	if vim.fn.exists("b:mail_mode_done") ~= 0 then
-		vim.api.nvim_echo({ { "Markdown format function executed previously", "WarningMsg" } }, true, {})
+		if feedback then
+			vim.api.nvim_echo({ { "Markdown format function executed previously", "WarningMsg" } }, true, {})
+		end
 		return
 	end
 	vim.b.mail_mode_done = true
@@ -121,7 +126,9 @@ local function mail_md_mode()
 		{}
 	)
 	-- notify user
-	vim.api.nvim_echo({ { "Using markdown syntax for mail body" } }, true, {})
+	if feedback then
+		vim.api.nvim_echo({ { "Using markdown syntax for mail body" } }, true, {})
+	end
 end
 
 -- config([opts])  {{{1
@@ -412,12 +419,9 @@ vim.bo.completefunc = "v:lua.require'dn-mail'.address_completion"
 ---The function called by this mapping can only be executed once. Subsequent
 ---attmpts to execute it display a warning message before execution aborts.
 ---@brief ]]
-vim.keymap.set(
-	{ "n", "i" },
-	"<Leader>md",
-	mail_md_mode,
-	{ buf = 0, silent = true, desc = "Use markdown syntax highlighting for message body" }
-)
+vim.keymap.set({ "n", "i" }, "<Leader>md", function()
+	mail_md_mode(true)
+end, { buf = 0, silent = true, desc = "Use markdown syntax highlighting for message body (with feedback)" })
 
 -- <M-q> = rewrap paragraph  {{{1
 
@@ -437,11 +441,11 @@ vim.keymap.set("i", "<M-q>", "<Esc>{gq}<CR>a", { remap = false, silent = true })
 
 ---@mod dn_mail.commands Commands
 
--- MUMarkdownFormatting = markdown highlighting of message body  {{{1
+-- MUMailMarkdownFormatting = markdown highlighting of message body  {{{1
 
----@tag dn_mail.MUMarkdownFormatting
+---@tag dn_mail.MUMailMarkdownFormatting
 ---@brief [[
----MUMarkdownFormatting = markdown highlighting of message body ~
+---MUMailMarkdownFormatting = markdown highlighting of message body ~
 ---
 ---Change the syntax highlighting of the email message body to markdown.
 ---This is useful for mail programs configured to process the message body
@@ -450,12 +454,34 @@ vim.keymap.set("i", "<M-q>", "<Esc>{gq}<CR>a", { remap = false, silent = true })
 ---Be aware that there is no corresponding mapping or command to reverse
 ---this change once applied.
 ---
----The function called by this command can only be executed once. Subsequent
----attmpts to execute it display a warning message before execution aborts.
+---The function called by this command can only be executed once. Successful
+---execution results in a message to the user advising of the changed
+---formatting. Subsequent attempts to execute it display a warning message
+---before execution aborts.
 ---@brief ]]
 vim.api.nvim_create_user_command("MUMailMarkdownFormatting", function()
+	mail_md_mode(true)
+end, { desc = "Use markdown syntax highlighting for message body (with feedback)" })
+
+-- MUMailMDFormatSilent = markdown highlighting of message body  {{{1
+
+---@tag dn_mail.MUMailMDFormatSilent
+---@brief [[
+---MUMailMDFormatSilent = markdown highlighting of message body ~
+---
+---Change the syntax highlighting of the email message body to markdown.
+---This is useful for mail programs configured to process the message body
+---to convert markdown to html.
+---
+---Be aware that there is no corresponding mapping or command to reverse
+---this change once applied.
+---
+---The function called by this command can only be executed once. No
+---feedback is provided on success or failure.
+---@brief ]]
+vim.api.nvim_create_user_command("MUMailMDFormatSilent", function()
 	mail_md_mode()
-end, { desc = "Use markdown syntax highlighting for message body" })
+end, { desc = "Use markdown syntax highlighting for message body (no feedback)" })
 -- }}}1
 
 -- note on folding in this file  {{{1
